@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:testes/models/item.dart';
 
 void main() => runApp(MyApp());
@@ -24,9 +28,9 @@ class AppHome extends StatefulWidget {
   AppHome() {
     item = [];
 
-    item.add(Item(done: false, title: "Tarefa 1"));
-    item.add(Item(done: true, title: "Tarefa 2"));
-    item.add(Item(done: false, title: "Tarefa 3"));
+    // item.add(Item(done: false, title: "Tarefa 1"));
+    // item.add(Item(done: true, title: "Tarefa 2"));
+    // item.add(Item(done: false, title: "Tarefa 3"));
   }
 
   @override
@@ -43,6 +47,7 @@ class _AppHomeState extends State<AppHome> {
         Item(done: false, title: newTaslCtrl.text),
       );
       newTaslCtrl.text = "";
+      save();
     });
   }
 
@@ -50,6 +55,29 @@ class _AppHomeState extends State<AppHome> {
     setState(() {
       widget.item.removeAt(index);
     });
+    save();
+  }
+
+  Future load() async {
+    var prefs = await SharedPreferences.getInstance();
+    var data = prefs.getString('data');
+
+    if (data != null) {
+      Iterable decoded = jsonDecode(data);
+      List<Item> result = decoded.map((x) => Item.fromJson(x)).toList();
+      setState(() {
+        widget.item = result;
+      });
+    }
+  }
+
+  save() async {
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.setString('data', jsonEncode(widget.item));
+  }
+
+  _AppHomeState() {
+    load();
   }
 
   @override
@@ -81,6 +109,7 @@ class _AppHomeState extends State<AppHome> {
               onChanged: (value) {
                 setState(() {
                   item.done = value;
+                  save();
                 });
               },
             ),
